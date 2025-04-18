@@ -1,0 +1,168 @@
+import java.util.*;
+
+public class Main {
+
+    static class User {
+        private String name;
+        private double balance;
+
+        public User(String name) {
+            this.name = name;
+            this.balance = 0.0;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public double getBalance() {
+            return balance;
+        }
+
+        public void updateBalance(double amount) {
+            this.balance += amount;
+        }
+
+        @Override
+        public String toString() {
+            return name + " => Balance: " + String.format("%.2f", balance);
+        }
+    }
+
+    static class Expense {
+        private String description;
+        private double amount;
+        private User paidBy;
+        private List<User> participants;
+
+        public Expense(String description, double amount, User paidBy, List<User> participants) {
+            this.description = description;
+            this.amount = amount;
+            this.paidBy = paidBy;
+            this.participants = participants;
+        }
+
+        public void splitExpense() {
+            double splitAmount = amount / participants.size();
+            for (User user : participants) {
+                if (user != paidBy) {
+                    user.updateBalance(-splitAmount);
+                    paidBy.updateBalance(splitAmount);
+                }
+            }
+        }
+
+        @Override
+        public String toString() {
+            return description + " | Amount: " + amount + " | Paid by: " + paidBy.getName();
+        }
+    }
+
+    static class ExpenseSplitter {
+        private Map<String, User> users = new HashMap<>();
+        private List<Expense> expenses = new ArrayList<>();
+
+        public void addUser(String name) {
+            if (!users.containsKey(name)) {
+                users.put(name, new User(name));
+                System.out.println("User " + name + " added.");
+            } else {
+                System.out.println("User already exists.");
+            }
+        }
+
+        public User getUser(String name) {
+            return users.get(name);
+        }
+
+        public void addExpense(String description, double amount, String paidByName, List<String> participantNames) {
+            User paidBy = getUser(paidByName);
+            if (paidBy == null) {
+                System.out.println("Payer not found.");
+                return;
+            }
+
+            List<User> participants = new ArrayList<>();
+            for (String name : participantNames) {
+                User user = getUser(name);
+                if (user != null) {
+                    participants.add(user);
+                } else {
+                    System.out.println("User " + name + " not found.");
+                }
+            }
+
+            if (participants.size() == 0) {
+                System.out.println("No valid participants.");
+                return;
+            }
+
+            Expense expense = new Expense(description, amount, paidBy, participants);
+            expense.splitExpense();
+            expenses.add(expense);
+            System.out.println("Expense added and split.");
+        }
+
+        public void showBalances() {
+            System.out.println("\nBalances:");
+            for (User user : users.values()) {
+                System.out.println(user);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        ExpenseSplitter splitter = new ExpenseSplitter();
+
+        System.out.println("==== Welcome to Expense Splitter ====");
+
+        while (true) {
+            System.out.println("\n1. Add User\n2. Add Expense\n3. Show Balances\n4. Exit");
+            System.out.print("Choose an option: ");
+            int choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter username: ");
+                    String name = sc.nextLine();
+                    splitter.addUser(name);
+                    break;
+
+                case 2:
+                    System.out.print("Enter description: ");
+                    String desc = sc.nextLine();
+                    System.out.print("Enter amount: ");
+                    double amount = sc.nextDouble();
+                    sc.nextLine();
+                    System.out.print("Who paid? ");
+                    String paidBy = sc.nextLine();
+
+                    System.out.print("Enter number of participants: ");
+                    int n = sc.nextInt();
+                    sc.nextLine();
+
+                    List<String> participants = new ArrayList<>();
+                    for (int i = 0; i < n; i++) {
+                        System.out.print("Enter participant " + (i + 1) + ": ");
+                        participants.add(sc.nextLine());
+                    }
+
+                    splitter.addExpense(desc, amount, paidBy, participants);
+                    break;
+
+                case 3:
+                    splitter.showBalances();
+                    break;
+
+                case 4:
+                    System.out.println("Exiting. Goodbye!");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
+}
